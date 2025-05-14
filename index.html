@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>習慣化アプリ (骨組み)</title>
+      <style>
+body {
+    font-family: 'Arial', sans-serif; /* 読みやすいフォントファミリーを指定 */
+    line-height: 1.6; /* 行の高さを調整して、文字を読みやすくする */
+    margin: 20px; /* ページの周囲に余白を追加 */
+    background-color: #f4f4f4; /* 少し薄いグレーの背景色を設定 */
+    color: #333; /* 基本的な文字色を濃いグレーに設定 */
+}
+
+h1, h2 {
+    color: #555; /* 見出しの色を設定 */
+    border-bottom: 2px solid #ccc; /* 見出しの下に線を引く */
+    padding-bottom: 5px; /* 見出しの文字と線との間に余白 */
+    margin-bottom: 20px; /* 見出しの下に余白 */
+}
+
+/* フォームと記録エリアの各セクション */
+div {
+    margin-bottom: 20px; /* 各セクションの下に余白 */
+    padding: 15px; /* セクションの内側に余白 */
+    background-color: #fff; /* セクションの背景色を白に */
+    border-radius: 8px; /* セクションの角を丸くする */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* セクションに軽い影をつける */
+}
+
+label {
+    display: inline-block; /* インライン要素だが、幅や上下の余白などを設定可能に */
+    margin-bottom: 8px; /* ラベルの下に余白 */
+    font-weight: bold; /* 文字を太くする */
+    margin-right: 10px; /* ラベルと入力フィールドの間に余白 */
+}
+
+input[type="number"],
+input[type="text"] {
+    padding: 10px; /* 入力欄の内側に余白 */
+    margin-right: 5px; /* 入力欄の右に余白 */
+    border: 1px solid #ccc; /* 入力欄のボーダー */
+    border-radius: 4px; /* 入力欄の角を丸くする */
+    font-size: 1rem; /* フォントサイズ */
+}
+
+button {
+    padding: 10px 20px; /* ボタンの内側に余白 */
+    background-color: #5cb85c; /* ボタンの背景色 (緑) */
+    color: white; /* ボタンの文字色を白に */
+    border: none; /* ボタンのボーダーをなくす */
+    border-radius: 4px; /* ボタンの角を丸くする */
+    cursor: pointer; /* カーソルをポインターに変更して、クリックできることを示す */
+    font-size: 1rem; /* フォントサイズ */
+    margin-top: 10px; /* ボタンの上に余白 */
+    transition: background-color 0.3s ease; /* ホバー時の色変化を滑らかにする */
+}
+
+button:hover {
+    background-color: #4cae4c; /* ボタンにカーソルを合わせたときの背景色 */
+}
+
+/* 記録表示エリア全体のスタイル（必要に応じて） */
+#record-area {
+    /* div タグのスタイルが適用されます */
+}
+
+/* 個々の記録項目（JavaScriptで追加される予定の要素）のスタイル */
+.record-item {
+    background-color: #e9e9e9; /* 記録項目の背景色 */
+    padding: 10px; /* 記録項目の内側に余白 */
+    margin-bottom: 8px; /* 記録項目同士の間に余白 */
+    border-radius: 4px; /* 記録項目の角を丸くする */
+    border: 1px solid #ddd; /* 記録項目のボーダー */
+}
+
+/* スマートフォン表示時の調整（任意） */
+@media (max-width: 600px) {
+    body {
+        margin: 10px; /* 狭い画面では余白を減らす */
+    }
+    div {
+        padding: 10px; /* 狭い画面では内側の余白を減らす */
+    }
+    input[type="number"],
+    input[type="text"],
+    button {
+        font-size: 0.9rem; /* 狭い画面ではフォントサイズを少し小さく */
+    }
+}
+      </style>
+</head>
+<body>
+
+    <h1>資格勉強 習慣化アプリ</h1>
+
+    <div>
+        <h2>記録する</h2>
+        <div>
+            <label for="study-time">勉強時間:</label>
+            <input type="number" id="study-time" min="0" value="0"> 分
+        </div>
+        <button id="record-button">記録する</button>
+    </div>
+
+    <div id="record-area">
+        <h2>過去の記録</h2>
+        <div id="records-list">
+            </div>
+    </div>
+
+    <script>
+        // HTML要素への参照を取得
+        const studyTimeInput = document.getElementById('study-time');
+        const recordButton = document.getElementById('record-button');
+        const recordsList = document.getElementById('records-list');
+
+        // ローカルストレージにデータを保存する際のキー名
+        const STORAGE_KEY = 'qualificationStudyRecords';
+
+        // --- 関数定義 ---
+
+        // 現在の日付を YYYY-MM-DD 形式で取得する関数
+        function getCurrentDate() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // 月は0から始まるため+1し、2桁にパディング
+            const day = String(now.getDate()).padStart(2, '0'); // 日を2桁にパディング
+            return `${year}-${month}-${day}`;
+        }
+
+        // ローカルストレージから記録データを読み込む関数
+        function loadRecords() {
+            const recordsJson = localStorage.getItem(STORAGE_KEY);
+            if (recordsJson) {
+                // JSON形式の文字列をJavaScriptの配列に変換して返す
+                return JSON.parse(recordsJson);
+            }
+            // データがなければ空の配列を返す
+            return [];
+        }
+
+        // 記録データをローカルストレージに保存する関数
+        function saveRecords(records) {
+            // JavaScriptの配列をJSON形式の文字列に変換して保存
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        }
+
+        // 記録リストを表示エリアに描画する関数
+        function renderRecords() {
+            // 既存の表示内容をクリア
+            recordsList.innerHTML = '';
+
+            // ローカルストレージから最新の記録を読み込む
+            const records = loadRecords();
+
+            if (records.length === 0) {
+                recordsList.innerHTML = '<div class="record-item">まだ記録がありません。</div>';
+                return;
+            }
+
+            // 記録を日付の新しい順にソート (必要であれば)
+            // records.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            // 各記録項目を表示
+            records.forEach(record => {
+                const recordItem = document.createElement('div');
+                recordItem.classList.add('record-item'); // CSSでスタイルを適用するためにクラスを追加
+                recordItem.textContent = `${record.date}: ${record.time} 分`; // 例: "2023-10-27: 60 分"
+
+                // 他の項目があればここに追加して表示
+                // if (record.content) {
+                //     recordItem.textContent += ` (${record.content})`;
+                // }
+
+                recordsList.appendChild(recordItem); // 表示エリアに追加
+            });
+        }
+
+        // --- イベントリスナー ---
+
+        // 「記録する」ボタンがクリックされたときの処理
+        recordButton.addEventListener('click', () => {
+            const studyTime = parseInt(studyTimeInput.value, 10); // 入力値を整数に変換
+
+            // 入力値のバリデーション (数値であり、0以上であることを確認)
+            if (isNaN(studyTime) || studyTime < 0) {
+                alert('勉強時間を正しく入力してください。');
+                studyTimeInput.value = 0; // 不正な入力値をリセット
+                return; // 処理を中断
+            }
+
+            const today = getCurrentDate(); // 今日の日付を取得
+
+            // 新しい記録データを作成
+            const newRecord = {
+                date: today,
+                time: studyTime,
+                // 他の項目があればここに追加
+                // content: studyContentInput.value // 例えば勉強内容入力欄がある場合
+            };
+
+            // 既存の記録データを読み込む
+            const records = loadRecords();
+
+            // 新しい記録を追加
+            // ※ 同じ日の記録を複数追加したい場合はこのまま
+            // ※ 同じ日の記録を上書きしたい場合は、records配列を検索して該当項目を更新する処理が必要
+            records.push(newRecord);
+
+            // 更新した記録データをローカルストレージに保存
+            saveRecords(records);
+
+            // 入力フィールドをクリア
+            studyTimeInput.value = 0;
+            // もし勉強内容入力欄があれば
+            // studyContentInput.value = '';
+
+            // 記録リストを再描画して画面を更新
+            renderRecords();
+
+            alert('記録しました！'); // 記録完了をユーザーに通知
+        });
+
+        // --- アプリの初期化 ---
+
+        // ページが読み込まれたときに、ローカルストレージから記録を読み込んで表示する
+        renderRecords();
+
+    </script>
+
+</body>
+</html>
