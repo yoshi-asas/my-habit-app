@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>習慣化アプリ (骨組み)</title>
+    <title>習慣化アプリ</title>
       <style>
 body {
     font-family: 'Arial', sans-serif; /* 読みやすいフォントファミリーを指定 */
@@ -63,32 +63,59 @@ button:hover {
 
 /* 記録表示エリア全体のスタイル（必要に応じて） */
 #record-area {
-    /* div タグのスタイルが適用されます */
+     /* div タグのスタイルが適用されます */
 }
 
 /* 個々の記録項目（JavaScriptで追加される予定の要素）のスタイル */
 .record-item {
     background-color: #e9e9e9; /* 記録項目の背景色 */
     padding: 10px; /* 記録項目の内側に余白 */
-    margin-bottom: 8px; /* 記録項目同士の間に余白 */
-    border-radius: 4px; /* 記録項目の角を丸くする */
-    border: 1px solid #ddd; /* 記録項目のボーダー */
+    margin-bottom: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    word-break: break-all; /* 長い内容でも改行されるように */
+    display: flex; /* 記録内容とボタンを横並びにする */
+    justify-content: space-between; /* 記録内容とボタンを両端に配置 */
+    align-items: center; /* 縦方向の中央揃え */
 }
 
-/* スマートフォン表示時の調整（任意） */
+/* 削除ボタンのスタイル */
+.delete-button {
+    padding: 5px 10px; /* ボタンの内側に余白 */
+    background-color: #d9534f; /* ボタンの背景色 (赤) */
+    color: white; /* ボタンの文字色を白に */
+    border: none; /* ボタンのボーダーをなくす */
+    border-radius: 4px; /* ボタンの角を丸くする */
+    cursor: pointer; /* カーソルをポインターに変更 */
+    font-size: 0.8rem; /* フォントサイズを小さく */
+    margin-left: 10px; /* 記録内容との間に余白 */
+    flex-shrink: 0; /* 内容が長くなってもボタンのサイズを縮小しない */
+    transition: background-color 0.3s ease; /* ホバー時の色変化を滑らかにする */
+}
+
+.delete-button:hover {
+    background-color: #c9302c; /* ホバー時の背景色 */
+}
+
+
 @media (max-width: 600px) {
     body {
-        margin: 10px; /* 狭い画面では余白を減らす */
+        margin: 10px;
     }
     div {
-        padding: 10px; /* 狭い画面では内側の余白を減らす */
+        padding: 10px;
     }
     input[type="number"],
     input[type="text"],
     button {
-        font-size: 0.9rem; /* 狭い画面ではフォントサイズを少し小さく */
+        font-size: 0.9rem;
+    }
+    .delete-button {
+        font-size: 0.7rem; /* スマートフォンではさらに小さく */
+        padding: 3px 6px;
     }
 }
+
       </style>
 </head>
 <body>
@@ -121,7 +148,7 @@ button:hover {
 
         // --- 関数定義 ---
 
-        // 現在の日付を YYYY-MM-DD 形式で取得する関数
+        // 現在の日付をYYYY-MM-DD 形式で取得する関数
         function getCurrentDate() {
             const now = new Date();
             const year = now.getFullYear();
@@ -147,6 +174,19 @@ button:hover {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
         }
 
+        // 指定されたインデックスの記録を削除する関数
+        function deleteRecord(indexToDelete) {
+            const records = loadRecords(); // 最新の記録を読み込む
+
+            // 指定されたインデックスの項目を配列から削除
+            // splice(開始インデックス, 削除する要素数)
+            records.splice(indexToDelete, 1);
+
+            saveRecords(records); // 変更した配列をローカルストレージに保存
+            renderRecords(); // 記録リストを再描画して画面を更新
+        }
+
+
         // 記録リストを表示エリアに描画する関数
         function renderRecords() {
             // 既存の表示内容をクリア
@@ -160,19 +200,38 @@ button:hover {
                 return;
             }
 
-            // 記録を日付の新しい順にソート (必要であれば)
-            // records.sort((a, b) => new Date(b.date) - new Date(a.date));
-
             // 各記録項目を表示
-            records.forEach(record => {
+            // 配列のインデックスを記録項目と一緒に渡すことで、削除時にどの項目かを特定できるようにします
+            records.forEach((record, index) => {
                 const recordItem = document.createElement('div');
                 recordItem.classList.add('record-item'); // CSSでスタイルを適用するためにクラスを追加
-                recordItem.textContent = `${record.date}: ${record.time} 分`; // 例: "2023-10-27: 60 分"
 
+                // 記録内容を表示する要素を作成
+                const recordContent = document.createElement('span');
+                recordContent.textContent = `${record.date}: ${record.time} 分`; // 例: "2023-10-27: 60 分"
                 // 他の項目があればここに追加して表示
                 // if (record.content) {
-                //     recordItem.textContent += ` (${record.content})`;
+                //     recordContent.textContent += ` (${record.content})`;
                 // }
+
+                // 削除ボタンを作成
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '削除';
+                deleteButton.classList.add('delete-button'); // CSSでスタイルを適用
+
+                // 削除ボタンにクリックイベントリスナーを追加
+                // どの記録項目に対応するボタンか分かるように、forEachのindexを渡します
+                deleteButton.addEventListener('click', () => {
+                    // 削除確認ダイアログを表示
+                    if (confirm('この記録を削除してもよろしいですか？')) {
+                         deleteRecord(index); // 確認後、削除関数を呼び出す
+                    }
+                });
+
+                // 記録内容と削除ボタンを記録項目に追加
+                recordItem.appendChild(recordContent);
+                recordItem.appendChild(deleteButton);
+
 
                 recordsList.appendChild(recordItem); // 表示エリアに追加
             });
