@@ -3,132 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>習慣化アプリ</title>
-      <style>
-body {
-    font-family: 'Arial', sans-serif; /* 読みやすいフォントファミリーを指定 */
-    line-height: 1.6; /* 行の高さを調整して、文字を読みやすくする */
-    margin: 20px; /* ページの周囲に余白を追加 */
-    background-color: #f4f4f4; /* 少し薄いグレーの背景色を設定 */
-    color: #333; /* 基本的な文字色を濃いグレーに設定 */
-}
+    <title>習慣化アプリ (タイマー・残り日数)</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
 
-h1, h2 {
-    color: #555; /* 見出しの色を設定 */
-    border-bottom: 2px solid #ccc; /* 見出しの下に線を引く */
-    padding-bottom: 5px; /* 見出しの文字と線との間に余白 */
-    margin-bottom: 20px; /* 見出しの下に余白 */
-}
+        h1, h2 {
+            color: #555;
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+        }
 
-/* フォームと記録エリアの各セクション */
-div {
-    margin-bottom: 20px; /* 各セクションの下に余白 */
-    padding: 15px; /* セクションの内側に余白 */
-    background-color: #fff; /* セクションの背景色を白に */
-    border-radius: 8px; /* セクションの角を丸くする */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* セクションに軽い影をつける */
-}
+        div {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-label {
-    display: inline-block; /* インライン要素だが、幅や上下の余白などを設定可能に */
-    margin-bottom: 8px; /* ラベルの下に余白 */
-    font-weight: bold; /* 文字を太くする */
-    margin-right: 10px; /* ラベルと入力フィールドの間に余白 */
-}
+        label {
+            display: inline-block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
 
-input[type="number"],
-input[type="text"] {
-    padding: 10px; /* 入力欄の内側に余白 */
-    margin-right: 5px; /* 入力欄の右に余白 */
-    border: 1px solid #ccc; /* 入力欄のボーダー */
-    border-radius: 4px; /* 入力欄の角を丸くする */
-    font-size: 1rem; /* フォントサイズ */
-}
+        /* 入力欄はタイマー表示に変わるので非表示にするかスタイルを変更 */
+        /* input[type="number"],
+        input[type="text"] {
+            padding: 10px;
+            margin-right: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        } */
 
-button {
-    padding: 10px 20px; /* ボタンの内側に余白 */
-    background-color: #5cb85c; /* ボタンの背景色 (緑) */
-    color: white; /* ボタンの文字色を白に */
-    border: none; /* ボタンのボーダーをなくす */
-    border-radius: 4px; /* ボタンの角を丸くする */
-    cursor: pointer; /* カーソルをポインターに変更して、クリックできることを示す */
-    font-size: 1rem; /* フォントサイズ */
-    margin-top: 10px; /* ボタンの上に余白 */
-    transition: background-color 0.3s ease; /* ホバー時の色変化を滑らかにする */
-}
+        /* タイマー表示エリアのスタイル */
+        #timer-display {
+            font-size: 2em; /* 大きめのフォントサイズ */
+            font-weight: bold;
+            margin: 10px 0; /* 上下の余白 */
+            text-align: center; /* 中央揃え */
+            color: #333;
+        }
 
-button:hover {
-    background-color: #4cae4c; /* ボタンにカーソルを合わせたときの背景色 */
-}
+        /* ボタンコンテナのスタイル */
+        #button-container {
+            display: flex; /* ボタンを横並びにする */
+            gap: 10px; /* ボタン間のスペース */
+            margin-top: 15px; /* 上の要素との間に余白 */
+            justify-content: center; /* ボタン全体を中央に配置 */
+        }
 
-/* 記録表示エリア全体のスタイル（必要に応じて） */
-#record-area {
-     /* div タグのスタイルが適用されます */
-}
+        /* ボタンの基本スタイル */
+        button {
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
 
-/* 個々の記録項目（JavaScriptで追加される予定の要素）のスタイル */
-.record-item {
-    background-color: #e9e9e9; /* 記録項目の背景色 */
-    padding: 10px; /* 記録項目の内側に余白 */
-    margin-bottom: 8px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-    word-break: break-all; /* 長い内容でも改行されるように */
-    display: flex; /* 記録内容とボタンを横並びにする */
-    justify-content: space-between; /* 記録内容とボタンを両端に配置 */
-    align-items: center; /* 縦方向の中央揃え */
-}
+        /* スタートボタンのスタイル */
+        #start-button {
+            background-color: #5cb85c; /* 緑 */
+        }
 
-/* 削除ボタンのスタイル */
-.delete-button {
-    padding: 5px 10px; /* ボタンの内側に余白 */
-    background-color: #d9534f; /* ボタンの背景色 (赤) */
-    color: white; /* ボタンの文字色を白に */
-    border: none; /* ボタンのボーダーをなくす */
-    border-radius: 4px; /* ボタンの角を丸くする */
-    cursor: pointer; /* カーソルをポインターに変更 */
-    font-size: 0.8rem; /* フォントサイズを小さく */
-    margin-left: 10px; /* 記録内容との間に余白 */
-    flex-shrink: 0; /* 内容が長くなってもボタンのサイズを縮小しない */
-    transition: background-color 0.3s ease; /* ホバー時の色変化を滑らかにする */
-}
+        #start-button:hover:not(:disabled) {
+            background-color: #4cae4c;
+        }
 
-.delete-button:hover {
-    background-color: #c9302c; /* ホバー時の背景色 */
-}
+        /* ストップボタンのスタイル */
+        #stop-button {
+            background-color: #d9534f; /* 赤 */
+        }
+
+        #stop-button:hover:not(:disabled) {
+            background-color: #c9302c;
+        }
+
+         /* リセットボタンのスタイル (任意) */
+        /* #reset-button {
+            background-color: #f0ad4e; // オレンジ
+        }
+
+        #reset-button:hover:not(:disabled) {
+            background-color: #ec971f;
+        } */
 
 
-@media (max-width: 600px) {
-    body {
-        margin: 10px;
-    }
-    div {
-        padding: 10px;
-    }
-    input[type="number"],
-    input[type="text"],
-    button {
-        font-size: 0.9rem;
-    }
-    .delete-button {
-        font-size: 0.7rem; /* スマートフォンではさらに小さく */
-        padding: 3px 6px;
-    }
-}
+        /* 無効化されたボタンのスタイル */
+        button:disabled {
+            background-color: #cccccc; /* グレー */
+            cursor: not-allowed; /* カーソルを禁止マークに */
+        }
 
-      </style>
+
+        /* 記録表示エリア全体のスタイル */
+        #record-area {
+             /* div タグのスタイルが適用されます */
+        }
+
+        /* 個々の記録項目（JavaScriptで追加される予定の要素）のスタイル */
+        .record-item {
+            background-color: #e9e9e9;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            word-break: break-all;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 削除ボタンのスタイル */
+        .delete-button {
+            padding: 5px 10px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            flex-shrink: 0;
+            transition: background-color 0.3s ease;
+        }
+
+        .delete-button:hover {
+            background-color: #c9302c;
+        }
+
+        /* 残り日数表示エリアのスタイル */
+        #countdown-display {
+            font-size: 1.2em;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #007bff; /* 青色など、目立つ色に */
+            font-weight: bold;
+        }
+
+        /* 関連リンクエリアのスタイル */
+        #related-links {
+            text-align: center; /* リンクを中央揃え */
+            margin-top: 20px; /* 上の要素との間に余白 */
+            font-size: 0.9em; /* 少し小さめのフォント */
+        }
+
+        #related-links a {
+            color: #007bff; /* リンクの色 */
+            text-decoration: none; /* 下線をなくす */
+        }
+
+        #related-links a:hover {
+            text-decoration: underline; /* ホバー時に下線を表示 */
+        }
+
+
+        @media (max-width: 600px) {
+            body {
+                margin: 10px;
+            }
+            div {
+                padding: 10px;
+            }
+            input[type="number"],
+            input[type="text"],
+            button {
+                font-size: 0.9rem;
+            }
+            .delete-button {
+                font-size: 0.7rem;
+                padding: 3px 6px;
+            }
+            #timer-display {
+                font-size: 1.5em; /* スマートフォンでは少し小さく */
+            }
+            #button-container {
+                 flex-direction: column; /* スマートフォンではボタンを縦並びに */
+                 align-items: center; /* 中央揃え */
+            }
+             #button-container button {
+                 width: 80%; /* ボタンの幅を調整 */
+             }
+             #countdown-display {
+                 font-size: 1em; /* スマートフォンでは少し小さく */
+             }
+             #related-links {
+                 font-size: 0.8em; /* スマートフォンではさらに小さく */
+             }
+        }
+
+    </style>
 </head>
 <body>
 
     <h1>資格勉強 習慣化アプリ</h1>
 
+    <div id="countdown-display"></div>
+
     <div>
-        <h2>記録する</h2>
-        <div>
-            <label for="study-time">勉強時間:</label>
-            <input type="number" id="study-time" min="0" value="0"> 分
+        <h2>タイマー計測</h2>
+        <div id="timer-display">00:00:00</div>
+
+        <div id="button-container">
+             <button id="start-button">スタート</button>
+             <button id="stop-button" disabled>ストップ</button>
         </div>
-        <button id="record-button">記録する</button>
+
     </div>
 
     <div id="record-area">
@@ -137,62 +229,86 @@ button:hover {
             </div>
     </div>
 
+    <div id="related-links">
+        <p>関連リンク:</p>
+        <a href="https://www.fe-siken.com/fekakomon.php" target="_blank">基本情報技術者試験 過去問道場</a>
+    </div>
+
+
     <script>
         // HTML要素への参照を取得
-        const studyTimeInput = document.getElementById('study-time');
-        const recordButton = document.getElementById('record-button');
+        const timerDisplay = document.getElementById('timer-display');
+        const startButton = document.getElementById('start-button');
+        const stopButton = document.getElementById('stop-button');
         const recordsList = document.getElementById('records-list');
+        const countdownDisplay = document.getElementById('countdown-display'); // 残り日数表示エリアを取得
 
         // ローカルストレージにデータを保存する際のキー名
-        const STORAGE_KEY = 'qualificationStudyRecords';
+        const STORAGE_KEY = 'qualificationStudyRecordsTimer';
+
+        // タイマー関連の変数
+        let startTime = null;
+        let timerInterval = null;
+        let elapsedTime = 0;
+
+        // 試験日を設定 (2025年7月26日)
+        const examDate = new Date('2025-07-26T00:00:00'); // 日付オブジェクトとして設定
 
         // --- 関数定義 ---
 
-        // 現在の日付をYYYY-MM-DD 形式で取得する関数
+        // 現在の日付をYYYY-MM-DD 形式で取得する関数 (変更なし)
         function getCurrentDate() {
             const now = new Date();
             const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0'); // 月は0から始まるため+1し、2桁にパディング
-            const day = String(now.getDate()).padStart(2, '0'); // 日を2桁にパディング
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         }
 
-        // ローカルストレージから記録データを読み込む関数
+        // ローカルストレージから記録データを読み込む関数 (変更なし)
         function loadRecords() {
             const recordsJson = localStorage.getItem(STORAGE_KEY);
             if (recordsJson) {
-                // JSON形式の文字列をJavaScriptの配列に変換して返す
                 return JSON.parse(recordsJson);
             }
-            // データがなければ空の配列を返す
             return [];
         }
 
-        // 記録データをローカルストレージに保存する関数
+        // 記録データをローカルストレージに保存する関数 (変更なし)
         function saveRecords(records) {
-            // JavaScriptの配列をJSON形式の文字列に変換して保存
             localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
         }
 
-        // 指定されたインデックスの記録を削除する関数
+        // 指定されたインデックスの記録を削除する関数 (変更なし)
         function deleteRecord(indexToDelete) {
-            const records = loadRecords(); // 最新の記録を読み込む
-
-            // 指定されたインデックスの項目を配列から削除
-            // splice(開始インデックス, 削除する要素数)
+            const records = loadRecords();
             records.splice(indexToDelete, 1);
-
-            saveRecords(records); // 変更した配列をローカルストレージに保存
-            renderRecords(); // 記録リストを再描画して画面を更新
+            saveRecords(records);
+            renderRecords();
         }
 
+        // 経過時間を HH:MM:SS 形式でフォーマットする関数 (変更なし)
+        function formatTime(milliseconds) {
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
 
-        // 記録リストを表示エリアに描画する関数
+            const pad = (num) => String(num).padStart(2, '0');
+
+            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        }
+
+        // タイマー表示を更新する関数 (変更なし)
+        function updateTimerDisplay() {
+            const now = Date.now();
+            elapsedTime = now - startTime;
+            timerDisplay.textContent = formatTime(elapsedTime);
+        }
+
+        // 記録リストを表示エリアに描画する関数 (変更なし)
         function renderRecords() {
-            // 既存の表示内容をクリア
             recordsList.innerHTML = '';
-
-            // ローカルストレージから最新の記録を読み込む
             const records = loadRecords();
 
             if (records.length === 0) {
@@ -200,92 +316,107 @@ button:hover {
                 return;
             }
 
-            // 各記録項目を表示
-            // 配列のインデックスを記録項目と一緒に渡すことで、削除時にどの項目かを特定できるようにします
             records.forEach((record, index) => {
                 const recordItem = document.createElement('div');
-                recordItem.classList.add('record-item'); // CSSでスタイルを適用するためにクラスを追加
+                recordItem.classList.add('record-item');
 
-                // 記録内容を表示する要素を作成
                 const recordContent = document.createElement('span');
-                recordContent.textContent = `${record.date}: ${record.time} 分`; // 例: "2023-10-27: 60 分"
-                // 他の項目があればここに追加して表示
-                // if (record.content) {
-                //     recordContent.textContent += ` (${record.content})`;
-                // }
+                recordContent.textContent = `${record.date}: ${formatTime(record.time)}`;
 
-                // 削除ボタンを作成
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = '削除';
-                deleteButton.classList.add('delete-button'); // CSSでスタイルを適用
+                deleteButton.classList.add('delete-button');
 
-                // 削除ボタンにクリックイベントリスナーを追加
-                // どの記録項目に対応するボタンか分かるように、forEachのindexを渡します
                 deleteButton.addEventListener('click', () => {
-                    // 削除確認ダイアログを表示
                     if (confirm('この記録を削除してもよろしいですか？')) {
-                         deleteRecord(index); // 確認後、削除関数を呼び出す
+                         deleteRecord(index);
                     }
                 });
 
-                // 記録内容と削除ボタンを記録項目に追加
                 recordItem.appendChild(recordContent);
                 recordItem.appendChild(deleteButton);
-
-
-                recordsList.appendChild(recordItem); // 表示エリアに追加
+                recordsList.appendChild(recordItem);
             });
         }
 
-        // --- イベントリスナー ---
+        // 試験日までの残り日数を計算して表示する関数 (変更なし)
+        function updateCountdown() {
+            const today = new Date();
+            // 時刻情報を取り除き、日付のみで比較するために日付をリセット
+            today.setHours(0, 0, 0, 0);
+            examDate.setHours(0, 0, 0, 0); // 試験日も日付のみにリセット
 
-        // 「記録する」ボタンがクリックされたときの処理
-        recordButton.addEventListener('click', () => {
-            const studyTime = parseInt(studyTimeInput.value, 10); // 入力値を整数に変換
+            const timeDiff = examDate.getTime() - today.getTime(); // ミリ秒単位での差
+            const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // 日数に変換 (小数点以下を切り上げ)
 
-            // 入力値のバリデーション (数値であり、0以上であることを確認)
-            if (isNaN(studyTime) || studyTime < 0) {
-                alert('勉強時間を正しく入力してください。');
-                studyTimeInput.value = 0; // 不正な入力値をリセット
-                return; // 処理を中断
+            if (daysRemaining > 0) {
+                countdownDisplay.textContent = `基本情報技術者試験まで あと ${daysRemaining} 日`;
+            } else if (daysRemaining === 0) {
+                 countdownDisplay.textContent = `基本情報技術者試験は本日です！`;
+            }
+            else {
+                countdownDisplay.textContent = `基本情報技術者試験は終了しました。`;
+            }
+        }
+
+
+        // --- イベントリスナー --- (変更なし)
+
+        startButton.addEventListener('click', () => {
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimerDisplay, 1000);
+
+            startButton.disabled = true;
+            stopButton.disabled = false;
+        });
+
+        stopButton.addEventListener('click', () => {
+            clearInterval(timerInterval);
+
+            const measuredTime = elapsedTime;
+
+            if (measuredTime <= 0) {
+                 alert('計測時間が短すぎます。');
+                 elapsedTime = 0;
+                 timerDisplay.textContent = formatTime(elapsedTime);
+                 startButton.disabled = false;
+                 stopButton.disabled = true;
+                 return;
             }
 
-            const today = getCurrentDate(); // 今日の日付を取得
+            const today = getCurrentDate();
 
-            // 新しい記録データを作成
             const newRecord = {
                 date: today,
-                time: studyTime,
-                // 他の項目があればここに追加
-                // content: studyContentInput.value // 例えば勉強内容入力欄がある場合
+                time: measuredTime,
             };
 
-            // 既存の記録データを読み込む
             const records = loadRecords();
-
-            // 新しい記録を追加
-            // ※ 同じ日の記録を複数追加したい場合はこのまま
-            // ※ 同じ日の記録を上書きしたい場合は、records配列を検索して該当項目を更新する処理が必要
             records.push(newRecord);
-
-            // 更新した記録データをローカルストレージに保存
             saveRecords(records);
 
-            // 入力フィールドをクリア
-            studyTimeInput.value = 0;
-            // もし勉強内容入力欄があれば
-            // studyContentInput.value = '';
+            elapsedTime = 0;
+            timerDisplay.textContent = formatTime(elapsedTime);
 
-            // 記録リストを再描画して画面を更新
+            startButton.disabled = false;
+            stopButton.disabled = true;
+
             renderRecords();
-
-            alert('記録しました！'); // 記録完了をユーザーに通知
+            alert('記録しました！');
         });
+
 
         // --- アプリの初期化 ---
 
         // ページが読み込まれたときに、ローカルストレージから記録を読み込んで表示する
         renderRecords();
+
+        // ページ読み込み時に残り日数を計算して表示する
+        updateCountdown();
+
+        // 毎日残り日数を更新したい場合は、setIntervalなどで定期的にupdateCountdownを呼び出すことも可能ですが、
+        // 通常はページを開いたときに計算し直せば十分です。
+        // setInterval(updateCountdown, 1000 * 60 * 60 * 24); // 例: 24時間ごとに更新
 
     </script>
 
