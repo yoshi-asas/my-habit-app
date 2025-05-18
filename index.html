@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>習慣化アプリ (タイマー・残り日数・週累計)</title>
+    <title>習慣化アプリ (タイマー・残り日数・週累計・メモ)</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -34,16 +34,6 @@
             font-weight: bold;
             margin-right: 10px;
         }
-
-        /* 入力欄はタイマー表示に変わるので非表示にするかスタイルを変更 */
-        /* input[type="number"],
-        input[type="text"] {
-            padding: 10px;
-            margin-right: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1rem;
-        } */
 
         /* タイマー表示エリアのスタイル */
         #timer-display {
@@ -91,22 +81,11 @@
             background-color: #c9302c;
         }
 
-         /* リセットボタンのスタイル (任意) */
-        /* #reset-button {
-            background-color: #f0ad4e; // オレンジ
-        }
-
-        #reset-button:hover:not(:disabled) {
-            background-color: #ec971f;
-        } */
-
-
         /* 無効化されたボタンのスタイル */
         button:disabled {
             background-color: #cccccc; /* グレー */
             cursor: not-allowed; /* カーソルを禁止マークに */
         }
-
 
         /* 記録表示エリア全体のスタイル */
         #record-area {
@@ -124,7 +103,23 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap; /* スマホ表示などで要素が収まらない場合に折り返す */
         }
+
+        /* 記録内容（日付と時間）のスタイル */
+        .record-content {
+            flex-grow: 1; /* 利用可能なスペースを埋める */
+            margin-right: 10px; /* メモとの間に余白 */
+        }
+
+        /* 記録されたメモ内容のスタイル */
+        .record-memo {
+            font-size: 0.9em;
+            color: #555;
+            margin-top: 5px; /* 時間表示との間に余白 */
+            width: 100%; /* 幅を100%にして次の行に表示 */
+        }
+
 
         /* 削除ボタンのスタイル */
         .delete-button {
@@ -167,6 +162,22 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
 
+        /* メモ入力エリアのスタイル */
+        #memo-area {
+            margin-top: 15px; /* タイマー・ボタンエリアとの間に余白 */
+        }
+
+        #study-memo {
+            width: 100%; /* 親要素の幅いっぱいに */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box; /* paddingとborderを幅に含める */
+            min-height: 80px; /* 最小の高さを設定 */
+            resize: vertical; /* 縦方向のみリサイズ可能に */
+        }
+
 
         /* 関連リンクエリアのスタイル */
         #related-links {
@@ -192,8 +203,6 @@
             div {
                 padding: 10px;
             }
-            input[type="number"],
-            input[type="text"],
             button {
                 font-size: 0.9rem;
             }
@@ -217,6 +226,24 @@
              #weekly-total-display {
                  font-size: 1em; /* スマートフォンでは少し小さく */
              }
+             #study-memo {
+                 font-size: 0.9rem; /* スマートフォンでは少し小さく */
+             }
+             .record-item {
+                 flex-direction: column; /* スマートフォンでは縦並びに */
+                 align-items: flex-start; /* 左寄せ */
+             }
+             .record-content {
+                 margin-right: 0;
+                 margin-bottom: 5px;
+             }
+             .delete-button {
+                 margin-left: 0;
+                 margin-top: 5px;
+             }
+             .record-memo {
+                 margin-top: 5px;
+             }
              #related-links {
                  font-size: 0.8em; /* スマートフォンではさらに小さく */
              }
@@ -233,12 +260,17 @@
     <div id="weekly-total-display"></div>
 
     <div>
-        <h2>タイマー計測</h2>
+        <h2>タイマー計測と記録</h2>
         <div id="timer-display">00:00:00</div>
 
         <div id="button-container">
              <button id="start-button">スタート</button>
              <button id="stop-button" disabled>ストップ</button>
+        </div>
+
+        <div id="memo-area">
+            <label for="study-memo">今日の勉強内容メモ:</label>
+            <textarea id="study-memo" placeholder="例: テキスト1章を読む, 問題集P.30-40を解く"></textarea>
         </div>
 
     </div>
@@ -263,6 +295,7 @@
         const recordsList = document.getElementById('records-list');
         const countdownDisplay = document.getElementById('countdown-display'); // 残り日数表示エリアを取得
         const weeklyTotalDisplay = document.getElementById('weekly-total-display'); // 週累計表示エリアを取得
+        const studyMemoInput = document.getElementById('study-memo'); // メモ入力エリアを取得
 
         // ローカルストレージにデータを保存する際のキー名
         const STORAGE_KEY = 'qualificationStudyRecordsTimer';
@@ -303,7 +336,12 @@
         function loadRecords() {
             const recordsJson = localStorage.getItem(STORAGE_KEY);
             if (recordsJson) {
-                return JSON.parse(recordsJson);
+                try {
+                    return JSON.parse(recordsJson);
+                } catch (e) {
+                    console.error("ローカルストレージのデータをパースできませんでした:", e);
+                    return [];
+                }
             }
             return [];
         }
@@ -315,22 +353,24 @@
 
         // 指定された記録オブジェクトを配列から削除する関数
         function deleteRecord(recordToDelete) {
-            const records = loadRecords(); // 最新の記録を読み込む
+            const records = loadRecords();
 
             // 削除対象の記録オブジェクトと一致する要素のインデックスを見つける
-            // 日付と時間の両方が一致するものを探す（簡易的なユニーク判定）
+            // 日付、時間、メモ内容の全てが一致するものを探す（より正確なユニーク判定）
+            // ただし、全く同じ記録（同じ日に同じ時間で同じメモ内容）が複数ある場合は最初のものだけが削除されます。
             const indexToDelete = records.findIndex(record =>
-                record.date === recordToDelete.date && record.time === recordToDelete.time
+                record.date === recordToDelete.date &&
+                record.time === recordToDelete.time &&
+                record.content === recordToDelete.content // メモ内容も比較に追加
             );
 
-            if (indexToDelete !== -1) { // 記録が見つかった場合
-                records.splice(indexToDelete, 1); // そのインデックスの要素を削除
-                saveRecords(records); // 変更した配列をローカルストレージに保存
-                renderRecords(); // 記録リストを再描画
-                updateWeeklyTotal(); // 週累計も更新
+            if (indexToDelete !== -1) {
+                records.splice(indexToDelete, 1);
+                saveRecords(records);
+                renderRecords();
+                updateWeeklyTotal();
             } else {
-                console.error("削除対象の記録が見つかりませんでした。"); // 見つからなかった場合はエラーをコンソールに出力
-                 // 見つからなかった場合でも、念のため再描画して最新の状態を表示
+                console.error("削除対象の記録が見つかりませんでした。");
                 renderRecords();
                 updateWeeklyTotal();
             }
@@ -354,31 +394,40 @@
                 return;
             }
 
-            // 記録を日付の新しい順にソート (任意ですが見やすくなります)
+            // 記録を日付の新しい順にソート
             records.sort((a, b) => new Date(b.date) - new Date(a.date));
 
 
-            records.forEach((record, index) => { // indexはここでは表示順のためだけに使用
+            records.forEach((record) => {
                 const recordItem = document.createElement('div');
                 recordItem.classList.add('record-item');
 
+                // 記録内容（日付と時間）を表示する要素
                 const recordContent = document.createElement('span');
+                recordContent.classList.add('record-content'); // スタイル適用のためクラス追加
                 recordContent.textContent = `${record.date}: ${formatTime(record.time)}`;
+
+                // 記録されたメモ内容を表示する要素
+                const recordMemo = document.createElement('div'); // div要素で改行させる
+                recordMemo.classList.add('record-memo'); // スタイル適用のためクラス追加
+                recordMemo.textContent = record.content ? `メモ: ${record.content}` : ''; // メモがあれば表示
 
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = '削除';
                 deleteButton.classList.add('delete-button');
 
-                // 削除ボタンにクリックイベントリスナーを追加
-                // クリックされたら、その記録項目に対応するrecordオブジェクトを渡してdeleteRecordを呼び出す
                 deleteButton.addEventListener('click', () => {
                     if (confirm('この記録を削除してもよろしいですか？')) {
                          deleteRecord(record); // recordオブジェクトを渡す
                     }
                 });
 
-                recordItem.appendChild(recordContent);
-                recordItem.appendChild(deleteButton);
+                recordItem.appendChild(recordContent); // 日付と時間
+                recordItem.appendChild(deleteButton); // 削除ボタン (横並び)
+                if (record.content) { // メモがある場合のみ追加
+                     recordItem.appendChild(recordMemo); // メモ内容 (次の行)
+                }
+
                 recordsList.appendChild(recordItem);
             });
         }
@@ -439,7 +488,7 @@
         }
 
 
-        // --- イベントリスナー --- (変更なし)
+        // --- イベントリスナー ---
 
         startButton.addEventListener('click', () => {
             startTime = Date.now();
@@ -447,12 +496,15 @@
 
             startButton.disabled = true;
             stopButton.disabled = false;
+            // タイマー開始時、メモ入力欄を無効化することも検討（任意）
+            // studyMemoInput.disabled = true;
         });
 
         stopButton.addEventListener('click', () => {
             clearInterval(timerInterval);
 
             const measuredTime = elapsedTime;
+            const memoContent = studyMemoInput.value.trim(); // メモ入力欄の値を取得し、前後の空白を削除
 
             if (measuredTime <= 0) {
                  alert('計測時間が短すぎます。');
@@ -460,14 +512,17 @@
                  timerDisplay.textContent = formatTime(elapsedTime);
                  startButton.disabled = false;
                  stopButton.disabled = true;
+                 // studyMemoInput.disabled = false; // 無効化していた場合
                  return;
             }
 
             const today = getCurrentDate();
 
+            // 新しい記録データにメモ内容を追加
             const newRecord = {
                 date: today,
                 time: measuredTime, // ミリ秒で保存
+                content: memoContent // メモ内容を追加
             };
 
             const records = loadRecords();
@@ -477,8 +532,13 @@
             elapsedTime = 0;
             timerDisplay.textContent = formatTime(elapsedTime);
 
+            // メモ入力欄をクリア
+            studyMemoInput.value = '';
+
             startButton.disabled = false;
             stopButton.disabled = true;
+            // studyMemoInput.disabled = false; // 無効化していた場合
+
 
             renderRecords(); // 記録リストを更新
             updateWeeklyTotal(); // 週累計も更新
