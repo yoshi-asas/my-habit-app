@@ -3,566 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>習慣化アプリ (タイマー・残り日数・週累計・メモ)</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-
-        h1, h2 {
-            color: #555;
-            border-bottom: 2px solid #ccc;
-            padding-bottom: 5px;
-            margin-bottom: 20px;
-        }
-
-        div {
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        label {
-            display: inline-block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-
-        /* タイマー表示エリアのスタイル */
-        #timer-display {
-            font-size: 2em; /* 大きめのフォントサイズ */
-            font-weight: bold;
-            margin: 10px 0; /* 上下の余白 */
-            text-align: center; /* 中央揃え */
-            color: #333;
-        }
-
-        /* ボタンコンテナのスタイル */
-        #button-container {
-            display: flex; /* ボタンを横並びにする */
-            gap: 10px; /* ボタン間のスペース */
-            margin-top: 15px; /* 上の要素との間に余白 */
-            justify-content: center; /* ボタン全体を中央に配置 */
-        }
-
-        /* ボタンの基本スタイル */
-        button {
-            padding: 10px 20px;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s ease;
-        }
-
-        /* スタートボタンのスタイル */
-        #start-button {
-            background-color: #5cb85c; /* 緑 */
-        }
-
-        #start-button:hover:not(:disabled) {
-            background-color: #4cae4c;
-        }
-
-        /* ストップボタンのスタイル */
-        #stop-button {
-            background-color: #d9534f; /* 赤 */
-        }
-
-        #stop-button:hover:not(:disabled) {
-            background-color: #c9302c;
-        }
-
-        /* 無効化されたボタンのスタイル */
-        button:disabled {
-            background-color: #cccccc; /* グレー */
-            cursor: not-allowed; /* カーソルを禁止マークに */
-        }
-
-        /* 記録表示エリア全体のスタイル */
-        #record-area {
-             /* div タグのスタイルが適用されます */
-        }
-
-        /* 個々の記録項目（JavaScriptで追加される予定の要素）のスタイル */
-        .record-item {
-            background-color: #e9e9e9;
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            word-break: break-all;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap; /* スマホ表示などで要素が収まらない場合に折り返す */
-        }
-
-        /* 記録内容（日付と時間）のスタイル */
-        .record-content {
-            flex-grow: 1; /* 利用可能なスペースを埋める */
-            margin-right: 10px; /* メモとの間に余白 */
-        }
-
-        /* 記録されたメモ内容のスタイル */
-        .record-memo {
-            font-size: 0.9em;
-            color: #555;
-            margin-top: 5px; /* 時間表示との間に余白 */
-            width: 100%; /* 幅を100%にして次の行に表示 */
-        }
-
-
-        /* 削除ボタンのスタイル */
-        .delete-button {
-            padding: 5px 10px;
-            background-color: #d9534f;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            margin-left: 10px;
-            flex-shrink: 0;
-            transition: background-color 0.3s ease;
-        }
-
-        .delete-button:hover {
-            background-color: #c9302c;
-        }
-
-        /* 残り日数表示エリアのスタイル */
-        #countdown-display {
-            font-size: 1.2em;
-            text-align: center;
-            margin-bottom: 20px;
-            color: #007bff; /* 青色など、目立つ色に */
-            font-weight: bold;
-        }
-
-        /* 週累計表示エリアのスタイル */
-        #weekly-total-display {
-            font-size: 1.1em;
-            text-align: center;
-            margin-top: 15px; /* 上の要素との間に余白 */
-            margin-bottom: 20px; /* 下の要素との間に余白 */
-            color: #ff8c00; /* オレンジなど、目立つ色に */
-            font-weight: bold;
-            padding: 10px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-        }
-
-        /* メモ入力エリアのスタイル */
-        #memo-area {
-            margin-top: 15px; /* タイマー・ボタンエリアとの間に余白 */
-        }
-
-        #study-memo {
-            width: 100%; /* 親要素の幅いっぱいに */
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1rem;
-            box-sizing: border-box; /* paddingとborderを幅に含める */
-            min-height: 80px; /* 最小の高さを設定 */
-            resize: vertical; /* 縦方向のみリサイズ可能に */
-        }
-
-
-        /* 関連リンクエリアのスタイル */
-        #related-links {
-            text-align: center; /* リンクを中央揃え */
-            margin-top: 20px; /* 上の要素との間に余白 */
-            font-size: 0.9em; /* 少し小さめのフォント */
-        }
-
-        #related-links a {
-            color: #007bff; /* リンクの色 */
-            text-decoration: none; /* 下線をなくす */
-        }
-
-        #related-links a:hover {
-            text-decoration: underline; /* ホバー時に下線を表示 */
-        }
-
-
-        @media (max-width: 600px) {
-            body {
-                margin: 10px;
-            }
-            div {
-                padding: 10px;
-            }
-            button {
-                font-size: 0.9rem;
-            }
-            .delete-button {
-                font-size: 0.7rem;
-                padding: 3px 6px;
-            }
-            #timer-display {
-                font-size: 1.5em; /* スマートフォンでは少し小さく */
-            }
-            #button-container {
-                 flex-direction: column; /* スマートフォンではボタンを縦並びに */
-                 align-items: center; /* 中央揃え */
-            }
-             #button-container button {
-                 width: 80%; /* ボタンの幅を調整 */
-             }
-             #countdown-display {
-                 font-size: 1em; /* スマートフォンでは少し小さく */
-             }
-             #weekly-total-display {
-                 font-size: 1em; /* スマートフォンでは少し小さく */
-             }
-             #study-memo {
-                 font-size: 0.9rem; /* スマートフォンでは少し小さく */
-             }
-             .record-item {
-                 flex-direction: column; /* スマートフォンでは縦並びに */
-                 align-items: flex-start; /* 左寄せ */
-             }
-             .record-content {
-                 margin-right: 0;
-                 margin-bottom: 5px;
-             }
-             .delete-button {
-                 margin-left: 0;
-                 margin-top: 5px;
-             }
-             .record-memo {
-                 margin-top: 5px;
-             }
-             #related-links {
-                 font-size: 0.8em; /* スマートフォンではさらに小さく */
-             }
-        }
-
-    </style>
+    <title>旅行プランナーアプリ</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <header>
+        <h1>旅行プランナー</h1>
+    </header>
 
-    <h1>資格勉強 習慣化アプリ</h1>
-
-    <div id="countdown-display"></div>
-
-    <div id="weekly-total-display"></div>
-
-    <div>
-        <h2>タイマー計測と記録</h2>
-        <div id="timer-display">00:00:00</div>
-
-        <div id="button-container">
-             <button id="start-button">スタート</button>
-             <button id="stop-button" disabled>ストップ</button>
-        </div>
-
-        <div id="memo-area">
-            <label for="study-memo">今日の勉強内容メモ:</label>
-            <textarea id="study-memo" placeholder="例: テキスト1章を読む, 問題集P.30-40を解く"></textarea>
-        </div>
-
-    </div>
-
-    <div id="record-area">
-        <h2>過去の記録</h2>
-        <div id="records-list">
+    <main>
+        <section id="auth-section">
+            <h2>アプリへのアクセス</h2>
+            <div class="auth-container">
+                <input type="password" id="password-input" placeholder="合言葉を入力">
+                <button id="login-button">ログイン</button>
+                <p id="auth-message" class="error-message"></p>
             </div>
-    </div>
-
-    <div id="related-links">
-        <p>関連リンク:</p>
-        <a href="https://www.fe-siken.com/fekakomon.php" target="_blank">基本情報技術者試験 過去問道場</a>
-    </div>
-
-
-    <script>
-        // HTML要素への参照を取得
-        const timerDisplay = document.getElementById('timer-display');
-        const startButton = document.getElementById('start-button');
-        const stopButton = document.getElementById('stop-button');
-        const recordsList = document.getElementById('records-list');
-        const countdownDisplay = document.getElementById('countdown-display'); // 残り日数表示エリアを取得
-        const weeklyTotalDisplay = document.getElementById('weekly-total-display'); // 週累計表示エリアを取得
-        const studyMemoInput = document.getElementById('study-memo'); // メモ入力エリアを取得
-
-        // ローカルストレージにデータを保存する際のキー名
-        const STORAGE_KEY = 'qualificationStudyRecordsTimer';
-
-        // タイマー関連の変数
-        let startTime = null;
-        let timerInterval = null;
-        let elapsedTime = 0;
-
-        // 試験日を設定 (2025年7月26日)
-        const examDate = new Date('2025-07-26T00:00:00'); // 日付オブジェクトとして設定
-
-        // --- 関数定義 ---
-
-        // 現在の日付をYYYY-MM-DD 形式で取得する関数 (変更なし)
-        function getCurrentDate() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-         // 経過時間を HH:MM:SS 形式でフォーマットする関数 (変更なし)
-        function formatTime(milliseconds) {
-            const totalSeconds = Math.floor(milliseconds / 1000);
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-
-            const pad = (num) => String(num).padStart(2, '0');
-
-            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-        }
-
-
-        // ローカルストレージから記録データを読み込む関数 (変更なし)
-        function loadRecords() {
-            const recordsJson = localStorage.getItem(STORAGE_KEY);
-            if (recordsJson) {
-                try {
-                    return JSON.parse(recordsJson);
-                } catch (e) {
-                    console.error("ローカルストレージのデータをパースできませんでした:", e);
-                    return [];
-                }
-            }
-            return [];
-        }
-
-        // 記録データをローカルストレージに保存する関数 (変更なし)
-        function saveRecords(records) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-        }
-
-        // 指定された記録オブジェクトを配列から削除する関数
-        function deleteRecord(recordToDelete) {
-            const records = loadRecords();
-
-            // 削除対象の記録オブジェクトと一致する要素のインデックスを見つける
-            // 日付、時間、メモ内容の全てが一致するものを探す（より正確なユニーク判定）
-            // ただし、全く同じ記録（同じ日に同じ時間で同じメモ内容）が複数ある場合は最初のものだけが削除されます。
-            const indexToDelete = records.findIndex(record =>
-                record.date === recordToDelete.date &&
-                record.time === recordToDelete.time &&
-                record.content === recordToDelete.content // メモ内容も比較に追加
-            );
-
-            if (indexToDelete !== -1) {
-                records.splice(indexToDelete, 1);
-                saveRecords(records);
-                renderRecords();
-                updateWeeklyTotal();
-            } else {
-                console.error("削除対象の記録が見つかりませんでした。");
-                renderRecords();
-                updateWeeklyTotal();
-            }
-        }
-
-
-        // タイマー表示を更新する関数 (変更なし)
-        function updateTimerDisplay() {
-            const now = Date.now();
-            elapsedTime = now - startTime;
-            timerDisplay.textContent = formatTime(elapsedTime);
-        }
-
-        // 記録リストを表示エリアに描画する関数
-        function renderRecords() {
-            recordsList.innerHTML = '';
-            const records = loadRecords();
-
-            if (records.length === 0) {
-                recordsList.innerHTML = '<div class="record-item">まだ記録がありません。</div>';
-                return;
-            }
-
-            // 記録を日付の新しい順にソート
-            records.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-
-            records.forEach((record) => {
-                const recordItem = document.createElement('div');
-                recordItem.classList.add('record-item');
-
-                // 記録内容（日付と時間）を表示する要素
-                const recordContent = document.createElement('span');
-                recordContent.classList.add('record-content'); // スタイル適用のためクラス追加
-                recordContent.textContent = `${record.date}: ${formatTime(record.time)}`;
-
-                // 記録されたメモ内容を表示する要素
-                const recordMemo = document.createElement('div'); // div要素で改行させる
-                recordMemo.classList.add('record-memo'); // スタイル適用のためクラス追加
-                recordMemo.textContent = record.content ? `メモ: ${record.content}` : ''; // メモがあれば表示
-
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = '削除';
-                deleteButton.classList.add('delete-button');
-
-                deleteButton.addEventListener('click', () => {
-                    if (confirm('この記録を削除してもよろしいですか？')) {
-                         deleteRecord(record); // recordオブジェクトを渡す
-                    }
-                });
-
-                recordItem.appendChild(recordContent); // 日付と時間
-                recordItem.appendChild(deleteButton); // 削除ボタン (横並び)
-                if (record.content) { // メモがある場合のみ追加
-                     recordItem.appendChild(recordMemo); // メモ内容 (次の行)
-                }
-
-                recordsList.appendChild(recordItem);
-            });
-        }
-
-        // 試験日までの残り日数を計算して表示する関数 (変更なし)
-        function updateCountdown() {
-            const today = new Date();
-            // 時刻情報を取り除き、日付のみで比較するために日付をリセット
-            today.setHours(0, 0, 0, 0);
-            examDate.setHours(0, 0, 0, 0); // 試験日も日付のみにリセット
-
-            const timeDiff = examDate.getTime() - today.getTime(); // ミリ秒単位での差
-            const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // 日数に変換 (小数点以下を切り上げ)
-
-            if (daysRemaining > 0) {
-                countdownDisplay.textContent = `基本情報技術者試験まで あと ${daysRemaining} 日`;
-            } else if (daysRemaining === 0) {
-                 countdownDisplay.textContent = `基本情報技術者試験は本日です！`;
-            }
-            else {
-                countdownDisplay.textContent = `基本情報技術者試験は終了しました。`;
-            }
-        }
-
-        // 週の累計勉強時間を計算して表示する関数 (変更なし)
-        function updateWeeklyTotal() {
-            const records = loadRecords(); // 全記録を読み込む
-            const today = new Date();
-
-            // 今週の月曜日の日付を取得
-            const dayOfWeek = today.getDay(); // 曜日を取得 (0:日, 1:月, ..., 6:土)
-            const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 日曜日の場合は6日前、それ以外は(曜日-1)日前
-            const mondayOfThisWeek = new Date(today);
-            mondayOfThisWeek.setDate(today.getDate() - diffToMonday);
-            mondayOfThisWeek.setHours(0, 0, 0, 0); // 月曜日の0時0分0秒に設定
-
-            // 今週の日曜日の日付を取得 (月曜日の6日後)
-            const sundayOfThisWeek = new Date(mondayOfThisWeek);
-            sundayOfThisWeek.setDate(mondayOfThisWeek.getDate() + 6);
-            sundayOfThisWeek.setHours(23, 59, 59, 999); // 日曜日の23時59分59秒に設定
-
-
-            let weeklyTotalMilliseconds = 0;
-
-            // 今週の期間内の記録を合計
-            records.forEach(record => {
-                const recordDate = new Date(record.date); // 記録の日付をDateオブジェクトに変換
-                 recordDate.setHours(0, 0, 0, 0); // 日付のみで比較するために時刻をリセット
-
-                // 記録の日付が今週の月曜日から日曜日の間にあるかチェック
-                if (recordDate >= mondayOfThisWeek && recordDate <= sundayOfThisWeek) {
-                    weeklyTotalMilliseconds += record.time; // 累計に加算 (timeはミリ秒)
-                }
-            });
-
-            // 週累計を表示エリアに設定
-            weeklyTotalDisplay.textContent = `今週の累計勉強時間: ${formatTime(weeklyTotalMilliseconds)}`;
-        }
-
-
-        // --- イベントリスナー ---
-
-        startButton.addEventListener('click', () => {
-            startTime = Date.now();
-            timerInterval = setInterval(updateTimerDisplay, 1000);
-
-            startButton.disabled = true;
-            stopButton.disabled = false;
-            // タイマー開始時、メモ入力欄を無効化することも検討（任意）
-            // studyMemoInput.disabled = true;
-        });
-
-        stopButton.addEventListener('click', () => {
-            clearInterval(timerInterval);
-
-            const measuredTime = elapsedTime;
-            const memoContent = studyMemoInput.value.trim(); // メモ入力欄の値を取得し、前後の空白を削除
-
-            if (measuredTime <= 0) {
-                 alert('計測時間が短すぎます。');
-                 elapsedTime = 0;
-                 timerDisplay.textContent = formatTime(elapsedTime);
-                 startButton.disabled = false;
-                 stopButton.disabled = true;
-                 // studyMemoInput.disabled = false; // 無効化していた場合
-                 return;
-            }
-
-            const today = getCurrentDate();
-
-            // 新しい記録データにメモ内容を追加
-            const newRecord = {
-                date: today,
-                time: measuredTime, // ミリ秒で保存
-                content: memoContent // メモ内容を追加
-            };
-
-            const records = loadRecords();
-            records.push(newRecord);
-            saveRecords(records);
-
-            elapsedTime = 0;
-            timerDisplay.textContent = formatTime(elapsedTime);
-
-            // メモ入力欄をクリア
-            studyMemoInput.value = '';
-
-            startButton.disabled = false;
-            stopButton.disabled = true;
-            // studyMemoInput.disabled = false; // 無効化していた場合
-
-
-            renderRecords(); // 記録リストを更新
-            updateWeeklyTotal(); // 週累計も更新
-
-            alert('記録しました！');
-        });
-
-
-        // --- アプリの初期化 ---
-
-        // ページが読み込まれたときに、ローカルストレージから記録を読み込んで表示する
-        renderRecords();
-
-        // ページ読み込み時に残り日数を計算して表示する
-        updateCountdown();
-
-        // ページ読み込み時に週累計を計算して表示する
-        updateWeeklyTotal();
-
-        // 毎日残り日数を更新したい場合は、setIntervalなどで定期的にupdateCountdownを呼び出すことも可能ですが、
-        // 通常はページを開いたときに計算し直せば十分です。
-        // setInterval(updateCountdown, 1000 * 60 * 60 * 24); // 例: 24時間ごとに更新
-
-    </script>
-
+        </section>
+
+        <div id="main-content" class="hidden">
+            <section id="itinerary-section" class="app-section">
+                <h2>1. 旅程管理</h2>
+                <div class="input-area">
+                    <input type="date" id="itinerary-date">
+                    <input type="time" id="itinerary-time">
+                    <input type="text" id="itinerary-event" placeholder="イベント内容">
+                    <button id="add-itinerary-button">追加</button>
+                </div>
+                <div class="list-area">
+                    <h3>今日の旅程</h3>
+                    <ul id="itinerary-list">
+                        </ul>
+                </div>
+            </section>
+
+            <section id="places-section" class="app-section">
+                <h2>2. 行きたい場所リスト</h2>
+                <div class="input-area">
+                    <input type="text" id="place-name" placeholder="場所の名前">
+                    <button id="add-place-button">追加</button>
+                </div>
+                <div class="list-area">
+                    <ul id="place-list">
+                        </ul>
+                </div>
+            </section>
+
+            <section id="items-section" class="app-section">
+                <h2>3. 持ち物リスト</h2>
+                <div class="input-area">
+                    <input type="text" id="item-name" placeholder="持ち物">
+                    <button id="add-item-button">追加</button>
+                </div>
+                <div class="list-area">
+                    <ul id="item-list">
+                        </ul>
+                </div>
+            </section>
+
+            <section id="souvenirs-section" class="app-section">
+                <h2>4. お土産リスト</h2>
+                <div class="input-area">
+                    <input type="text" id="souvenir-name" placeholder="お土産">
+                    <button id="add-souvenir-button">追加</button>
+                </div>
+                <div class="list-area">
+                    <ul id="souvenir-list">
+                        </ul>
+                </div>
+            </section>
+
+            <section id="memo-photo-section" class="app-section">
+                <h2>5. 簡易メモ・写真</h2>
+                <div class="memo-area">
+                    <h3>メモ</h3>
+                    <textarea id="memo-text" placeholder="ここにメモを入力してください"></textarea>
+                    <button id="save-memo-button">メモを保存</button>
+                </div>
+                <div class="photo-area">
+                    <h3>写真</h3>
+                    <input type="file" id="photo-upload" accept="image/*">
+                    <div id="photo-preview">
+                        </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 旅行プランナー</p>
+    </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>
