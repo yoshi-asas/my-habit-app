@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 認証成功後、保存されたデータを読み込む
             loadAllData();
         } else {
-            authMessage.textContent = '合言葉が違います。';
+            authMessage.textContent = '合言葉ちゃうわ。';
             passwordInput.value = ''; // パスワードをクリア
         }
     });
