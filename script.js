@@ -1,23 +1,99 @@
+// initMap関数はGoogle Maps APIが読み込まれたときに呼び出されるグローバル関数である必要があります
+// そのため、DOMContentLoadedリスナーの外に定義します。
+let map; // 地図オブジェクトをグローバルスコープで保持
+let service; // PlacesServiceオブジェクトをグローバルスコープで保持
+let autocomplete; // Autocompleteオブジェクトをグローバルスコープで保持
+
+function initMap() {
+    // 地図の初期化 (デフォルトは東京駅周辺)
+    map = new google.maps.Map(document.getElementById('map-canvas'), {
+        center: { lat: 35.681236, lng: 139.767125 }, // 例: 東京駅
+        zoom: 12
+    });
+
+    // PlacesServiceの初期化
+    service = new google.maps.places.PlacesService(map);
+
+    // オートコンプリートの初期化
+    const placeNameInput = document.getElementById('place-name'); // 既存の入力欄を使用
+    autocomplete = new google.maps.places.Autocomplete(placeNameInput, {
+        types: ['geocode', 'establishment'], // ジオコード（住所）と施設（場所）の候補
+        strictBounds: false // 地図の表示範囲に厳密に限定しない
+    });
+
+    // オートコンプリートで場所が選択されたときのイベントリスナー
+    autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+
+        if (!place.geometry) {
+            alert("場所の候補を選択してください。");
+            return;
+        }
+
+        if (place.geometry.viewport) {
+            map.fitBounds(place.geometry.viewport);
+        } else {
+            map.setCenter(place.geometry.location);
+            map.setZoom(17);
+        }
+
+        new google.maps.Marker({
+            map: map,
+            position: place.geometry.location,
+            title: place.name
+        });
+    });
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- 認証機能 ---
     const loginButton = document.getElementById('login-button');
-    const passwordInput = document.getElementById('password-input');
+    const passwordInput = document.getElementById('password-input'); // 今回は解答入力欄として使う
     const authSection = document.getElementById('auth-section');
     const mainContent = document.getElementById('main-content');
     const authMessage = document.getElementById('auth-message');
+    const quizQuestionElement = document.getElementById('quiz-question'); // クイズの質問を表示する要素
 
-    // ★★★ ここに合言葉を設定してください ★★★
-    const SECRET_PASSWORD = 'travel'; // 仮の合言葉
+    // ★★★ クイズの問題と解答のペアを設定 ★★★
+    // 質問と正解の配列
+   const quizzes = [
+        { question: "2003年、星野仙一監督の下でリーグ優勝した際の、優勝決定試合の相手チームはどこ？", answer: "広島" },
+        { question: "阪神タイガースの春季キャンプ地として、長年使用されている沖縄県の都市はどこ？", answer: "宜野座" },
+        { question: "2023年に阪神がアレを決めた日は何月何日？", answer: "9月14日" },
+        { question: "伝説のバックスクリーン3連発（1985年）で、最初にホームランを打った選手は誰？", answer: "バース" }
+    ];
+
+
+    let currentQuiz; // 現在表示されているクイズを保持する変数
+
+    // クイズを初期表示する関数
+    function displayQuiz() {
+        // ランダムにクイズを選択
+        const randomIndex = Math.floor(Math.random() * quizzes.length);
+        currentQuiz = quizzes[randomIndex];
+        quizQuestionElement.textContent = currentQuiz.question;
+        passwordInput.value = ''; // 入力欄をクリア
+        authMessage.textContent = ''; // エラーメッセージをクリア
+    }
+
+    // アプリ起動時にクイズを表示
+    displayQuiz();
 
     loginButton.addEventListener('click', () => {
-        if (passwordInput.value === SECRET_PASSWORD) {
+        const userAnswer = passwordInput.value.trim(); // 回答を取得し、前後の空白を除去
+
+        // 大文字・小文字を区別しない、または全角半角を考慮する場合はここで変換処理を追加
+        if (userAnswer === currentQuiz.answer) { // 回答が正解と一致するかチェック
             authSection.classList.add('hidden');
             mainContent.classList.remove('hidden');
             // 認証成功後、保存されたデータを読み込む
             loadAllData();
         } else {
-            authMessage.textContent = '合言葉ちゃうわ。';
-            passwordInput.value = ''; // パスワードをクリア
+            authMessage.textContent = 'もしかしてにわか？';
+            passwordInput.value = ''; // 入力欄をクリア
+            // 不正解の場合は別のクイズを出すか、同じクイズを繰り返すか、選択できます。
+            // displayQuiz(); // 別のクイズを出す場合
         }
     });
 
@@ -30,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const itineraryList = document.getElementById('itinerary-list');
 
     // 行きたい場所リスト
+    // initMap()内のplaceNameInputと連携させるため、ここではそのまま
     const placeNameInput = document.getElementById('place-name');
     const addPlaceButton = document.getElementById('add-place-button');
     const placeList = document.getElementById('place-list');
@@ -63,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let places = [];
     let items = [];
     let souvenirs = [];
-    let photos = []; // Base64エンコードされた画像データを保存する場合
+    let photos = [];
 
     // --- 汎用的なリストアイテム追加関数 ---
     function createListItem(text, key, isChecked = false, dataId = null) {
@@ -122,7 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderItineraries();
             saveData(ITINERARY_KEY, itineraries);
 
-            // 入力欄をクリア
             itineraryDateInput.value = '';
             itineraryTimeInput.value = '';
             itineraryEventInput.value = '';
@@ -133,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderItineraries() {
         itineraryList.innerHTML = ''; // 一度クリア
-        // 日付と時間でソート
         const sortedItineraries = [...itineraries].sort((a, b) => {
             const dateTimeA = new Date(`${a.date}T${a.time}`);
             const dateTimeB = new Date(`${b.date}T${b.time}`);
@@ -149,8 +224,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 行きたい場所リスト ---
     addPlaceButton.addEventListener('click', () => {
         const placeName = placeNameInput.value.trim();
+
         if (placeName) {
-            const placeItem = { id: Date.now(), name: placeName };
+            const selectedPlace = autocomplete.getPlace();
+
+            let placeItem;
+            if (selectedPlace && selectedPlace.name === placeName) {
+                placeItem = {
+                    id: Date.now(),
+                    name: selectedPlace.name,
+                    address: selectedPlace.formatted_address || '',
+                    lat: selectedPlace.geometry ? selectedPlace.geometry.location.lat() : null,
+                    lng: selectedPlace.geometry ? selectedPlace.geometry.location.lng() : null,
+                    place_id: selectedPlace.place_id || ''
+                };
+            } else {
+                placeItem = {
+                    id: Date.now(),
+                    name: placeName,
+                    address: '',
+                    lat: null,
+                    lng: null,
+                    place_id: ''
+                };
+            }
+
             places.push(placeItem);
             renderPlaces();
             saveData(PLACES_KEY, places);
@@ -162,12 +260,21 @@ document.addEventListener('DOMContentLoaded', () => {
         placeList.innerHTML = '';
         places.forEach(item => {
             const li = createListItem(item.name, PLACES_KEY, false, item.id);
-            // Google Mapsへの簡易リンク（任意）
-            const mapLink = document.createElement('a');
-            mapLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`;
-            mapLink.textContent = ' (地図)';
-            mapLink.target = '_blank'; // 新しいタブで開く
-            li.querySelector('span').appendChild(mapLink); // 場所名のspanに追加
+
+            if (item.lat && item.lng) {
+                const mapLink = document.createElement('a');
+                mapLink.href = `https://www.google.com/maps/search/?api=1&query=${item.lat},${item.lng}&query_place_id=${item.place_id}`;
+                mapLink.textContent = ' (地図を見る)';
+                mapLink.target = '_blank';
+                li.querySelector('span').appendChild(mapLink);
+            } else if (item.name) {
+                const mapLink = document.createElement('a');
+                mapLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`;
+                mapLink.textContent = ' (地図検索)';
+                mapLink.target = '_blank';
+                li.querySelector('span').appendChild(mapLink);
+            }
+
             placeList.appendChild(li);
         });
     }
@@ -224,8 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const files = event.target.files;
 
         if (files) {
-            // 写真をlocalStorageに保存する場合（簡易的で、大きなファイルには不向き）
-            // より堅牢な保存にはIndexedDBを推奨します
             const currentPhotos = [];
             let filesProcessed = 0;
 
@@ -236,14 +341,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         const img = document.createElement('img');
                         img.src = e.target.result;
                         photoPreviewDiv.appendChild(img);
-                        currentPhotos.push(e.target.result); // Base64データを配列に追加
+                        currentPhotos.push(e.target.result);
 
                         filesProcessed++;
                         if (filesProcessed === files.length) {
-                            saveData(PHOTOS_KEY, currentPhotos); // すべてのファイルを処理したら保存
+                            saveData(PHOTOS_KEY, currentPhotos);
                         }
                     };
-                    reader.readAsDataURL(file); // 画像をBase64形式で読み込む
+                    reader.readAsDataURL(file);
                 }
             });
         }
@@ -282,7 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
         souvenirs = loadData(SOUVENIRS_KEY);
         renderSouvenirs();
 
-        memoTextInput.value = loadData(MEMO_KEY, ''); // メモは文字列なのでデフォルトは空文字列
+        memoTextInput.value = loadData(MEMO_KEY, '');
 
         photos = loadData(PHOTOS_KEY, []);
         renderPhotos();

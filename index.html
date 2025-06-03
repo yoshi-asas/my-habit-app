@@ -13,11 +13,9 @@
 
     <main>
         <section id="auth-section">
-            <h2>アプリへのアクセス</h2>
+            <h2>アプリへのアクセス - クイズに答えんかい！</h2>
             <div class="auth-container">
-                <input type="password" id="password-input" placeholder="合言葉を入力">
-                <button id="login-button">ログイン</button>
-                <p id="auth-message" class="error-message"></p>
+                <span id="quiz-question" class="quiz-question-text"></span> <input type="text" id="password-input" placeholder="ここに回答を入力"> <button id="login-button">回答する</button> <p id="auth-message" class="error-message"></p>
             </div>
         </section>
 
@@ -47,6 +45,7 @@
                     <ul id="place-list">
                         </ul>
                 </div>
+                <div id="map-canvas" style="height: 400px; width: 100%; border-radius: 6px; margin-top: 20px;"></div>
             </section>
 
             <section id="items-section" class="app-section">
@@ -91,9 +90,10 @@
     </main>
 
     <footer>
-        <p>&copy; 2025 旅行プランナー</p>
+        <p>© 2025 旅行プランナー</p>
     </footer>
 
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGVWJ7epp29nJvEeyo2bWaF6rV9m_vRNQ&libraries=places&callback=initMap"></script>
     <script src="script.js"></script>
 </body>
 </html>
